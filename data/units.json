@@ -1,0 +1,30 @@
+{
+  "infanterie": {
+    "name": "Infanterie",
+    "count": 10,
+    "speed": 38.0,
+    "range": 230.0,
+    "reload": 2.2,
+    "accuracy": 0.3,
+    "melee": 0.15
+  },
+  "kavallerie": {
+    "name": "Kavallerie",
+    "count": 6,
+    "speed": 105.0,
+    "range": 26.0,
+    "reload": 0.9,
+    "accuracy": 0.0,
+    "melee": 0.45
+  },
+  "artillerie": {
+    "name": "Artillerie",
+    "count": 3,
+    "speed": 22.0,
+    "range": 700.0,
+    "reload": 3.5,
+    "accuracy": 0.0,
+    "melee": 0.05,
+    "blast_radius": 48.0
+  }
+}

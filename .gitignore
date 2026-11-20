@@ -1,0 +1,14 @@
+# Godot-Zwischenspeicher und Export-Zugangsdaten
+.godot/
+export_credentials.cfg
+
+# Erzeugte Builds
+build/
+*.apk
+*.aab
+*.keystore
+
+# Temporäre Dateien
+*.tmp
+.DS_Store
+Thumbs.db

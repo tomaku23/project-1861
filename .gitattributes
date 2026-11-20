@@ -1,0 +1,5 @@
+# Einheitliche Zeilenenden, damit Windows und GitHub dieselben Dateien sehen.
+* text=auto eol=lf
+*.png binary
+*.ogg binary
+*.wav binary

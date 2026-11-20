@@ -1,0 +1,36 @@
+; Engine configuration file.
+; Projekt 1861 – Steuerungs-Labor (Phase 1)
+; Format für Godot 4.x, getestet wird mit Godot 4.7.2.
+
+config_version=5
+
+[application]
+
+config/name="Projekt 1861"
+config/description="Steuerungs-Labor für ein 2D-Strategiespiel (Spaßprojekt)."
+config/version="0.1.0"
+run/main_scene="res://scenes/lab/control_lab.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[autoload]
+
+SaveSystem="*res://systems/save_system.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=4
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.38, 0.52, 0.3, 1)

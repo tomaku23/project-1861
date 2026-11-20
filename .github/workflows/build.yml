@@ -1,0 +1,117 @@
+# Baut das Spiel bei jedem Push auf „main“:
+#   1. Godot laden und das Projekt importieren
+#   2. Automatische Tests ausführen (bricht bei Fehlern ab)
+#   3. Browser-Version bauen und auf GitHub Pages veröffentlichen
+#   4. Android-Datei (APK) bauen und als Download „labor-aktuell“ bereitstellen
+name: Bauen und testen
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Godot und Export-Vorlagen laden
+        run: |
+          set -euo pipefail
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          curl -fsSL -o godot.zip "${base}/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          sudo mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
+          curl -fsSL -o templates.tpz "${base}/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          target="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$target" /tmp/templates
+          unzip -q templates.tpz -d /tmp/templates
+          mv /tmp/templates/templates/* "$target/"
+          rm -f godot.zip templates.tpz
+          godot --version
+
+      - name: Projekt importieren
+        run: |
+          timeout 300 godot --headless --path . --import || timeout 300 godot --headless --path . --editor --quit || true
+
+      - name: Automatische Tests
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/run_tests.gd 2>&1 | tee test.log
+          if grep -q "SCRIPT ERROR" test.log; then
+            echo "Skriptfehler gefunden – siehe Log oben."
+            exit 1
+          fi
+
+      - name: Browser-Version bauen
+        run: |
+          mkdir -p build/web
+          godot --headless --path . --export-release "Web" build/web/index.html
+          test -f build/web/index.html
+
+      - name: Android-Version bauen (Testversion)
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          mkdir -p build/android "$HOME/.config/godot"
+          keytool -genkeypair -v -keystore "$RUNNER_TEMP/debug.keystore" -storepass android \
+            -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+          for name in editor_settings-4.tres "editor_settings-${GODOT_VERSION%.*}.tres"; do
+            printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\nexport/android/android_sdk_path = "%s"\nexport/android/java_sdk_path = "%s"\n' \
+              "$ANDROID_HOME" "$JAVA_HOME_17_X64" > "$HOME/.config/godot/$name"
+          done
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$RUNNER_TEMP/debug.keystore"
+          export GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android
+          godot --headless --path . --export-debug "Android" build/android/projekt-1861.apk
+          test -f build/android/projekt-1861.apk
+
+      - name: Builds aufbewahren
+        uses: actions/upload-artifact@v4
+        with:
+          name: projekt-1861-builds
+          path: build/
+          if-no-files-found: warn
+
+      - name: Android-Datei als Download bereitstellen
+        if: hashFiles('build/android/projekt-1861.apk') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete labor-aktuell --yes --cleanup-tag || true
+          gh release create labor-aktuell build/android/projekt-1861.apk \
+            --title "Steuerungs-Labor (aktueller Stand)" \
+            --notes "Automatisch gebaut aus ${GITHUB_SHA::7}. Auf dem Android-Handy herunterladen und installieren." \
+            --prerelease
+
+      - name: Browser-Version für GitHub Pages vorbereiten
+        if: github.event.repository.visibility == 'public'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  pages:
+    needs: build
+    if: github.event.repository.visibility == 'public'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Auf GitHub Pages veröffentlichen
+        id: deployment
+        uses: actions/deploy-pages@v4
