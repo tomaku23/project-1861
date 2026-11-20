@@ -13,5 +13,6 @@
 - Automatische Tests (eigener Test-Runner) und automatischer Build für Browser und Android über GitHub Actions.
 
 - Vision und Grundprinzipien in docs/VISION.md.
+- Korrektur: ETC2/ASTC-Texturkompression für den Android-Export aktiviert; Build-Ordner wird von Godot ignoriert.
 
 Noch nicht in diesem Stand: Platzhalter-Karte mit Zoom (folgt nach der Steuerungsentscheidung).

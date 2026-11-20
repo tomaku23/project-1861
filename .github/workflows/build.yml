@@ -45,6 +45,8 @@ jobs:
 
       - name: Projekt importieren
         run: |
+          # build/ liegt im Projektordner – .gdignore verhindert, dass Godot die Ausgaben importiert
+          mkdir -p build && touch build/.gdignore
           timeout 300 godot --headless --path . --import || timeout 300 godot --headless --path . --editor --quit || true
 
       - name: Automatische Tests
